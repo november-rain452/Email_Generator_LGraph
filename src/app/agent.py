@@ -19,6 +19,7 @@ class State(TypedDict):
     recipient: str
     sender: str
     feedback: str
+    details: str
     approved: bool
     accepted: Literal["Accepted", "Rejected", "NA"]
     logs: Annotated[list[str], operator.add]
@@ -45,3 +46,26 @@ prompt = ChatPromptTemplate.from_messages(
 )
 
 chain = prompt | llm | StrOutputParser()
+
+
+def generate_or_improve_node(state: State):
+    ans = chain.invoke(
+        {
+            "recipient": state["recipient"],
+            "details": state["details"],
+            "draft": state["draft"],
+            "feedback": state["feedback"],
+        }
+    )
+
+    return {"draft": ans}
+
+
+def send_node(state: State):
+    if state["approved"]:
+        print(f"Email sent to {state['recipient']}")
+
+
+def reject_node(state: State):
+    if not state["approved"]:
+        print("Email not sent")
