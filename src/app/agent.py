@@ -20,8 +20,7 @@ class State(TypedDict):
     sender: str
     feedback: str
     details: str
-    approved: bool
-    accepted: Literal["Accepted", "Rejected", "NA"]
+    status: Literal["Accepted", "Rejected", "Edit", "Exit", "NA"]
     logs: Annotated[list[str], operator.add]
 
 
@@ -59,6 +58,33 @@ def generate_or_improve_node(state: State):
     )
 
     return {"draft": ans}
+
+
+def evaluate_deny_edit_node(state: State):
+
+    stat = interrupt(
+        {
+            "message": "Review this draft",
+            "draft": state["draft"],
+            "recipient": state["recipient"],
+        }
+    )
+
+    return {"status": stat}
+
+
+def conditional_retry_exit_node(state: State):
+    if state["status"] is "Accepted":
+        return "Approved"
+
+    if state["status"] is "Exit":
+        return "Exit"
+
+    if state["status"] is "Rejected":
+        return "Retry"
+
+    if state["status"] is "Edit":
+        return "Edit"
 
 
 def send_node(state: State):
